@@ -65,23 +65,6 @@ jobs:
             shasum -a 256 target/${{ matrix.platform.target }}/release/anypod > ${{ matrix.platform.asset_name }}.sha256
           fi
 
-      - name: Generate Release Notes
-        if: matrix.platform.os == 'ubuntu-latest'
-        id: changelog
-        uses: release-drafter/release-drafter@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          output: CHANGELOG.md
-
-      - name: Set Release Body
-        if: matrix.platform.os == 'ubuntu-latest'
-        run: |
-          body="$(cat CHANGELOG.md)"
-          echo "RELEASE_BODY<<EOF" >> $GITHUB_ENV
-          echo "$body" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
@@ -90,7 +73,6 @@ jobs:
           asset_name: ${{ matrix.platform.asset_name }}
           tag: ${{ github.ref }}
           overwrite: true
-          body: ${{ env.RELEASE_BODY }}
 
       - name: Upload SHA256 checksums
         uses: svenstaro/upload-release-action@v2
