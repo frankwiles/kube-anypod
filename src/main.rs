@@ -62,7 +62,13 @@ fn parse_query(query: &str) -> ParsedQuery {
 }
 
 async fn find_pod(client: Client, config: &Config, query: ParsedQuery) -> anyhow::Result<Option<String>> {
-    let namespace = config.namespace.as_deref().unwrap_or("default");
+    let namespace = match &config.namespace {
+        Some(ns) => ns.as_str(),
+        None => {
+            let kubeconfig = kube::Config::infer().await?;
+            kubeconfig.default_namespace.as_str()
+        }
+    };
     let lp = ListParams::default();
 
     // Only look at specific workload type if specified
