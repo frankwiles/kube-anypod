@@ -9,9 +9,13 @@ homepage = "https://github.com/frankwiles/kube-anypod"
 keywords = ["kubernetes", "k8s", "kube"]
 categories = ["command-line-utilities"]
 
+[lib]
+name = "anypod"
+path = "src/lib.rs"
+
 [[bin]]
 name = "anypod"
-path = "src/main.rs" 
+path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0.96"
