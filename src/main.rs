@@ -256,11 +256,18 @@ async fn main() -> anyhow::Result<()> {
     let client = Client::try_default().await?;
     
     let parsed = parse_query(&config.query);
+    let namespace = if let Some(ns) = &config.namespace {
+        ns.clone()
+    } else {
+        let kubeconfig = kube::Config::infer().await?;
+        kubeconfig.default_namespace
+    };
+    let namespace = namespace.as_str();
+
     match find_pod(client.clone(), &config, parsed).await? {
         Some(pod_name) => println!("{}", pod_name),
         None => {
-            println!("No matching pods found in namespace '{}'", 
-                config.namespace.as_deref().unwrap_or("default").blue());
+            println!("No matching pods found in namespace '{}'", namespace.blue());
             show_available_workloads(&client, namespace).await?;
         }
     }
