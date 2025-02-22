@@ -267,7 +267,10 @@ async fn main() -> anyhow::Result<()> {
     match find_pod(client.clone(), &config, parsed).await? {
         Some(pod_name) => println!("{}", pod_name),
         None => {
-            println!("No matching pods found in namespace '{}'", namespace.blue());
+            println!("No matching pods found in namespace '{}'!", namespace.blue());
+            println!();
+            println!("Here are the workloads that exist in this namespace.");
+            println!();
             show_available_workloads(&client, namespace).await?;
         }
     }

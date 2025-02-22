@@ -107,6 +107,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "colorful",
  "k8s-openapi",
  "kube",
  "kube-runtime",
@@ -299,6 +300,12 @@ name = "colorchoice"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b63caa9aa9397e2d9480a9b13673856c78d8ac123288526c37d7839f2a86990"
+
+[[package]]
+name = "colorful"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ffb474a9c3219a8254ead020421ecf1b90427f29b55f6aae9a2471fa62c126ef"
 
 [[package]]
 name = "concurrent-queue"
