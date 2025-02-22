@@ -7,6 +7,7 @@ use colorful::Colorful;
 use k8s_openapi::api::apps::v1::{Deployment, StatefulSet, DaemonSet};
 use k8s_openapi::api::core::v1::Pod;
 use kube::{Api, Client, api::ListParams};
+use std::process::{Command, Stdio};
 
 #[derive(Debug, PartialEq)]
 enum WorkloadType {
