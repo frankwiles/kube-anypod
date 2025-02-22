@@ -269,7 +269,7 @@ async fn main() -> anyhow::Result<()> {
     }
 
     // Ensure we have a query when not generating completions
-    let query = config.query.ok_or_else(|| {
+    let query = config.query.clone().ok_or_else(|| {
         anyhow::anyhow!("A query is required when not generating completions")
     })?;
     let client = Client::try_default().await?;
