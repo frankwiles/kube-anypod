@@ -63,10 +63,10 @@ fn parse_query(query: &str) -> ParsedQuery {
 
 async fn find_pod(client: Client, config: &Config, query: ParsedQuery) -> anyhow::Result<Option<String>> {
     let namespace = match &config.namespace {
-        Some(ns) => ns.clone(),
+        Some(ns) => ns.as_str(),
         None => {
             let kubeconfig = kube::Config::infer().await?;
-            kubeconfig.default_namespace
+            kubeconfig.default_namespace.as_str()
         }
     };
     let lp = ListParams::default();
