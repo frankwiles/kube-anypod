@@ -25,25 +25,25 @@ jobs:
           - release_for: Linux-x86_64
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            binary_path: target/release/anypod
+            binary_path: target/x86_64-unknown-linux-gnu/release/anypod
             asset_name: anypod-linux-x86_64
             
           - release_for: Windows-x86_64
             os: windows-latest
             target: x86_64-pc-windows-msvc
-            binary_path: target/release/anypod.exe
+            binary_path: target/x86_64-pc-windows-msvc/release/anypod.exe
             asset_name: anypod-windows-x86_64.exe
             
           - release_for: macOS-x86_64
             os: macos-latest
             target: x86_64-apple-darwin
-            binary_path: target/release/anypod
+            binary_path: target/x86_64-apple-darwin/release/anypod
             asset_name: anypod-macos-x86_64
             
           - release_for: macOS-aarch64
             os: macos-latest
             target: aarch64-apple-darwin
-            binary_path: target/release/anypod
+            binary_path: target/aarch64-apple-darwin/release/anypod
             asset_name: anypod-macos-aarch64
 
     steps:
@@ -60,9 +60,9 @@ jobs:
       - name: Generate SHA256 checksums
         run: |
           if [ "${{ matrix.platform.os }}" = "windows-latest" ]; then
-            certutil -hashfile ${{ matrix.platform.binary_path }} SHA256 > ${{ matrix.platform.asset_name }}.sha256
+            certutil -hashfile target/${{ matrix.platform.target }}/release/anypod.exe SHA256 > ${{ matrix.platform.asset_name }}.sha256
           else
-            shasum -a 256 ${{ matrix.platform.binary_path }} > ${{ matrix.platform.asset_name }}.sha256
+            shasum -a 256 target/${{ matrix.platform.target }}/release/anypod > ${{ matrix.platform.asset_name }}.sha256
           fi
 
       - name: Generate Release Notes
