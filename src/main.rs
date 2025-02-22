@@ -5,7 +5,7 @@ extern crate k8s_openapi;
 use clap::Parser;
 use k8s_openapi::api::apps::v1::{Deployment, StatefulSet, DaemonSet};
 use k8s_openapi::api::core::v1::Pod;
-use kube::{Api, Client, api::{ListParams, ObjectMeta}};
+use kube::{Api, Client, api::ListParams};
 
 #[derive(Debug, PartialEq)]
 enum WorkloadType {
@@ -208,14 +208,10 @@ async fn main() -> anyhow::Result<()> {
     let config = Config::parse();
     let client = Client::try_default().await?;
     
-    if let Some(query) = config.query.as_deref() {
-        let parsed = parse_query(query);
-        match find_pod(client, &config, parsed).await? {
-            Some(pod_name) => println!("{}", pod_name),
-            None => println!("No matching pods found"),
-        }
-    } else {
-        println!("No query provided");
+    let parsed = parse_query(&config.query);
+    match find_pod(client, &config, parsed).await? {
+        Some(pod_name) => println!("{}", pod_name),
+        None => println!("No matching pods found"),
     }
     Ok(())
 }
