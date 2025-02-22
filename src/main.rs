@@ -265,7 +265,29 @@ async fn main() -> anyhow::Result<()> {
     let namespace = namespace.as_str();
 
     match find_pod(client.clone(), &config, parsed).await? {
-        Some(pod_name) => println!("{}", pod_name),
+        Some(pod_name) => {
+            if config.exec {
+                // Build kubectl command
+                let mut cmd = Command::new("kubectl");
+                
+                if let Some(ns) = &config.namespace {
+                    cmd.args(["-n", ns]);
+                }
+                
+                cmd.args(["exec", "-it", &pod_name, "--", "/bin/bash"])
+                    .stdin(Stdio::inherit())
+                    .stdout(Stdio::inherit())
+                    .stderr(Stdio::inherit());
+
+                // Execute kubectl
+                match cmd.status() {
+                    Ok(_) => (),
+                    Err(e) => println!("Failed to execute kubectl: {}", e),
+                }
+            } else {
+                println!("{}", pod_name);
+            }
+        },
         None => {
             println!("No matching pods found in namespace '{}'!", namespace.blue());
             println!();
