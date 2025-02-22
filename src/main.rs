@@ -1,10 +1,10 @@
-extern crate clap; 
-extern crate kube; 
-extern crate k8s_openapi; 
+extern crate clap;
+extern crate k8s_openapi;
+extern crate kube;
 
 use clap::Parser;
 use colorful::Colorful;
-use k8s_openapi::api::apps::v1::{Deployment, StatefulSet, DaemonSet};
+use k8s_openapi::api::apps::v1::{DaemonSet, Deployment, StatefulSet};
 use k8s_openapi::api::core::v1::Pod;
 use kube::{Api, Client, api::ListParams};
 use std::process::{Command, Stdio};
@@ -26,10 +26,10 @@ struct ParsedQuery {
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Config {
-    #[clap(short='n', long)]
+    #[clap(short = 'n', long)]
     namespace: Option<String>,
 
-    #[clap(short='e', long, default_value_t = false)]
+    #[clap(short = 'e', long, default_value_t = false)]
     exec: bool,
 
     #[clap(value_name = "QUERY")]
@@ -38,7 +38,7 @@ struct Config {
 
 fn parse_query(query: &str) -> ParsedQuery {
     let parts: Vec<&str> = query.split('/').collect();
-    
+
     match parts.as_slice() {
         [prefix, name] => {
             let workload_type = match *prefix {
@@ -79,13 +79,10 @@ async fn find_matching_pod(
                     // Check if pod is running and ready
                     if let Some(status) = pod.status {
                         let is_running = status.phase.as_deref() == Some("Running");
-                        let is_ready = status.conditions.iter()
-                            .flatten()
-                            .any(|condition| {
-                                condition.type_ == "Ready" && 
-                                condition.status == "True"
-                            });
-                        
+                        let is_ready = status.conditions.iter().flatten().any(|condition| {
+                            condition.type_ == "Ready" && condition.status == "True"
+                        });
+
                         if is_running && is_ready {
                             return Ok(Some(pod_name));
                         }
@@ -97,10 +94,7 @@ async fn find_matching_pod(
     Ok(None)
 }
 
-async fn show_available_workloads(
-    client: &Client,
-    namespace: &str,
-) -> anyhow::Result<()> {
+async fn show_available_workloads(client: &Client, namespace: &str) -> anyhow::Result<()> {
     let lp = ListParams::default();
 
     // Show Deployments
@@ -148,7 +142,11 @@ async fn show_available_workloads(
     Ok(())
 }
 
-async fn find_pod(client: Client, config: &Config, query: ParsedQuery) -> anyhow::Result<Option<String>> {
+async fn find_pod(
+    client: Client,
+    config: &Config,
+    query: ParsedQuery,
+) -> anyhow::Result<Option<String>> {
     let namespace = if let Some(ns) = &config.namespace {
         ns.clone()
     } else {
@@ -163,10 +161,12 @@ async fn find_pod(client: Client, config: &Config, query: ParsedQuery) -> anyhow
         WorkloadType::Deployment => {
             let deployments: Api<Deployment> = Api::namespaced(client.clone(), namespace);
             if let Ok(list) = deployments.list(&lp).await {
-                if let Some(deployment) = list.items
-                    .iter()
-                    .find(|d| d.metadata.name.as_ref()
-                        .map_or(false, |name| name.starts_with(&query.name))) {
+                if let Some(deployment) = list.items.iter().find(|d| {
+                    d.metadata
+                        .name
+                        .as_ref()
+                        .map_or(false, |name| name.starts_with(&query.name))
+                }) {
                     if let Some(name) = &deployment.metadata.name {
                         return find_matching_pod(&client, namespace, name).await;
                     }
@@ -177,10 +177,12 @@ async fn find_pod(client: Client, config: &Config, query: ParsedQuery) -> anyhow
         WorkloadType::StatefulSet => {
             let statefulsets: Api<StatefulSet> = Api::namespaced(client.clone(), namespace);
             if let Ok(list) = statefulsets.list(&lp).await {
-                if let Some(statefulset) = list.items
-                    .iter()
-                    .find(|ss| ss.metadata.name.as_ref()
-                        .map_or(false, |name| name.starts_with(&query.name))) {
+                if let Some(statefulset) = list.items.iter().find(|ss| {
+                    ss.metadata
+                        .name
+                        .as_ref()
+                        .map_or(false, |name| name.starts_with(&query.name))
+                }) {
                     if let Some(name) = &statefulset.metadata.name {
                         return find_matching_pod(&client, namespace, name).await;
                     }
@@ -191,10 +193,12 @@ async fn find_pod(client: Client, config: &Config, query: ParsedQuery) -> anyhow
         WorkloadType::DaemonSet => {
             let daemonsets: Api<DaemonSet> = Api::namespaced(client.clone(), namespace);
             if let Ok(list) = daemonsets.list(&lp).await {
-                if let Some(daemonset) = list.items
-                    .iter()
-                    .find(|ds| ds.metadata.name.as_ref()
-                        .map_or(false, |name| name.starts_with(&query.name))) {
+                if let Some(daemonset) = list.items.iter().find(|ds| {
+                    ds.metadata
+                        .name
+                        .as_ref()
+                        .map_or(false, |name| name.starts_with(&query.name))
+                }) {
                     if let Some(name) = &daemonset.metadata.name {
                         return find_matching_pod(&client, namespace, name).await;
                     }
@@ -206,10 +210,12 @@ async fn find_pod(client: Client, config: &Config, query: ParsedQuery) -> anyhow
             // Try each type in order
             let deployments: Api<Deployment> = Api::namespaced(client.clone(), namespace);
             if let Ok(list) = deployments.list(&lp).await {
-                if let Some(deployment) = list.items
-                    .iter()
-                    .find(|d| d.metadata.name.as_ref()
-                        .map_or(false, |name| name.starts_with(&query.name))) {
+                if let Some(deployment) = list.items.iter().find(|d| {
+                    d.metadata
+                        .name
+                        .as_ref()
+                        .map_or(false, |name| name.starts_with(&query.name))
+                }) {
                     if let Some(name) = &deployment.metadata.name {
                         if let Some(pod_name) = find_matching_pod(&client, namespace, name).await? {
                             return Ok(Some(pod_name));
@@ -220,10 +226,12 @@ async fn find_pod(client: Client, config: &Config, query: ParsedQuery) -> anyhow
 
             let statefulsets: Api<StatefulSet> = Api::namespaced(client.clone(), namespace);
             if let Ok(list) = statefulsets.list(&lp).await {
-                if let Some(statefulset) = list.items
-                    .iter()
-                    .find(|ss| ss.metadata.name.as_ref()
-                        .map_or(false, |name| name.starts_with(&query.name))) {
+                if let Some(statefulset) = list.items.iter().find(|ss| {
+                    ss.metadata
+                        .name
+                        .as_ref()
+                        .map_or(false, |name| name.starts_with(&query.name))
+                }) {
                     if let Some(name) = &statefulset.metadata.name {
                         if let Some(pod_name) = find_matching_pod(&client, namespace, name).await? {
                             return Ok(Some(pod_name));
@@ -234,10 +242,12 @@ async fn find_pod(client: Client, config: &Config, query: ParsedQuery) -> anyhow
 
             let daemonsets: Api<DaemonSet> = Api::namespaced(client.clone(), namespace);
             if let Ok(list) = daemonsets.list(&lp).await {
-                if let Some(daemonset) = list.items
-                    .iter()
-                    .find(|ds| ds.metadata.name.as_ref()
-                        .map_or(false, |name| name.starts_with(&query.name))) {
+                if let Some(daemonset) = list.items.iter().find(|ds| {
+                    ds.metadata
+                        .name
+                        .as_ref()
+                        .map_or(false, |name| name.starts_with(&query.name))
+                }) {
                     if let Some(name) = &daemonset.metadata.name {
                         if let Some(pod_name) = find_matching_pod(&client, namespace, name).await? {
                             return Ok(Some(pod_name));
@@ -270,11 +280,11 @@ async fn main() -> anyhow::Result<()> {
             if config.exec {
                 // Build kubectl command
                 let mut cmd = Command::new("kubectl");
-                
+
                 if let Some(ns) = &config.namespace {
                     cmd.args(["-n", ns]);
                 }
-                
+
                 cmd.args(["exec", "-it", &pod_name, "--", "/bin/bash"])
                     .stdin(Stdio::inherit())
                     .stdout(Stdio::inherit())
@@ -288,9 +298,12 @@ async fn main() -> anyhow::Result<()> {
             } else {
                 println!("{}", pod_name);
             }
-        },
+        }
         None => {
-            println!("No matching pods found in namespace '{}'!", namespace.blue());
+            println!(
+                "No matching pods found in namespace '{}'!",
+                namespace.blue()
+            );
             println!();
             println!("Here are the workloads that exist in this namespace.");
             println!();
