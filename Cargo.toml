@@ -1,0 +1,22 @@
+[package]
+name = "anypod"
+version = "0.1.0"
+edition = "2024"
+authors = ["Frank Wiles <frank@revsys.com>"]
+description = "Command line utility to quickly get the name of a random pod from a Deployment, StatefulSet or DaemonSet"
+license = "BSD-3-Clause"
+homepage = "https://github.com/frankwiles/kube-anypod"
+keywords = ["kubernetes", "k8s", "kube"]
+categories = ["command-line-utilities"]
+
+[[bin]]
+name = "anypod"
+path = "src/main.rs" 
+
+[dependencies]
+anyhow = "1.0.96"
+clap = { version = "4.5.30", features = ["derive"] }
+k8s-openapi = { version = "0.24.0", default-features = false, features = ["v1_29"] }
+kube = "0.98.0"
+kube-runtime = "0.98.0"
+tokio = { version = "1.43.0", features = ["full"] }
