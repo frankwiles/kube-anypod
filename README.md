@@ -32,6 +32,24 @@ ingress-nginx-controller-69fbfb4bfd-dvn8d
 **NOTE:** All queries are prefix queries.  So if you run `anypod f` it will use the first workload it finds that 
 starts with the letter 'f'
 
+### Shell Completion
+
+anypod provides shell completions for bash, zsh, fish, and PowerShell. After installation, you can generate them with:
+
+```shell
+# Bash
+anypod --completion bash > ~/.local/share/bash-completion/completions/anypod
+
+# Zsh
+anypod --completion zsh > ~/.zsh/completion/_anypod
+
+# Fish
+anypod --completion fish > ~/.config/fish/completions/anypod.fish
+
+# PowerShell
+anypod --completion powershell > anypod.ps1
+```
+
 ```shell
 # Return the name of the nginx Deployment in the current namespace 
 $ anypod ingress
