@@ -2,26 +2,13 @@ extern crate clap;
 extern crate k8s_openapi;
 extern crate kube;
 
+use anypod::{parse_query, ParsedQuery, WorkloadType};
 use clap::Parser;
 use colorful::Colorful;
 use k8s_openapi::api::apps::v1::{DaemonSet, Deployment, StatefulSet};
 use k8s_openapi::api::core::v1::Pod;
 use kube::{Api, Client, api::ListParams};
 use std::process::{Command, Stdio};
-
-#[derive(Debug, PartialEq)]
-enum WorkloadType {
-    Any,
-    Deployment,
-    StatefulSet,
-    DaemonSet,
-}
-
-#[derive(Debug)]
-struct ParsedQuery {
-    workload_type: WorkloadType,
-    name: String,
-}
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
