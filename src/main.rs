@@ -30,7 +30,8 @@ struct Config {
     #[clap(short='e', long, default_value_t = false)]
     exec: bool,
 
-    query: Option<String>,
+    #[clap(value_name = "QUERY")]
+    query: String,
 }
 
 fn parse_query(query: &str) -> ParsedQuery {
