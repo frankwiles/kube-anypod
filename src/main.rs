@@ -95,6 +95,57 @@ async fn find_matching_pod(
     Ok(None)
 }
 
+async fn show_available_workloads(
+    client: &Client,
+    namespace: &str,
+) -> anyhow::Result<()> {
+    let lp = ListParams::default();
+
+    // Show Deployments
+    let deployments: Api<Deployment> = Api::namespaced(client.clone(), namespace);
+    if let Ok(list) = deployments.list(&lp).await {
+        if !list.items.is_empty() {
+            println!("{}", "Deployments:".blue().bold());
+            for d in list.items {
+                if let Some(name) = d.metadata.name {
+                    println!("  {}", name.light_green());
+                }
+            }
+            println!();
+        }
+    }
+
+    // Show StatefulSets
+    let statefulsets: Api<StatefulSet> = Api::namespaced(client.clone(), namespace);
+    if let Ok(list) = statefulsets.list(&lp).await {
+        if !list.items.is_empty() {
+            println!("{}", "StatefulSets:".blue().bold());
+            for ss in list.items {
+                if let Some(name) = ss.metadata.name {
+                    println!("  {}", name.light_green());
+                }
+            }
+            println!();
+        }
+    }
+
+    // Show DaemonSets
+    let daemonsets: Api<DaemonSet> = Api::namespaced(client.clone(), namespace);
+    if let Ok(list) = daemonsets.list(&lp).await {
+        if !list.items.is_empty() {
+            println!("{}", "DaemonSets:".blue().bold());
+            for ds in list.items {
+                if let Some(name) = ds.metadata.name {
+                    println!("  {}", name.light_green());
+                }
+            }
+            println!();
+        }
+    }
+
+    Ok(())
+}
+
 async fn find_pod(client: Client, config: &Config, query: ParsedQuery) -> anyhow::Result<Option<String>> {
     let namespace = if let Some(ns) = &config.namespace {
         ns.clone()
@@ -204,9 +255,13 @@ async fn main() -> anyhow::Result<()> {
     let client = Client::try_default().await?;
     
     let parsed = parse_query(&config.query);
-    match find_pod(client, &config, parsed).await? {
+    match find_pod(client.clone(), &config, parsed).await? {
         Some(pod_name) => println!("{}", pod_name),
-        None => println!("No matching pods found"),
+        None => {
+            println!("No matching pods found in namespace '{}'", 
+                config.namespace.as_deref().unwrap_or("default").blue());
+            show_available_workloads(&client, namespace).await?;
+        }
     }
     Ok(())
 }
