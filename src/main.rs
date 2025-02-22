@@ -23,32 +23,6 @@ struct Config {
     query: String,
 }
 
-fn parse_query(query: &str) -> ParsedQuery {
-    let parts: Vec<&str> = query.split('/').collect();
-
-    match parts.as_slice() {
-        [prefix, name] => {
-            let workload_type = match *prefix {
-                "deployment" => WorkloadType::Deployment,
-                "statefulset" => WorkloadType::StatefulSet,
-                "daemonset" => WorkloadType::DaemonSet,
-                _ => WorkloadType::Any,
-            };
-            ParsedQuery {
-                workload_type,
-                name: name.to_string(),
-            }
-        }
-        [name] => ParsedQuery {
-            workload_type: WorkloadType::Any,
-            name: name.to_string(),
-        },
-        _ => ParsedQuery {
-            workload_type: WorkloadType::Any,
-            name: query.to_string(),
-        },
-    }
-}
 
 async fn find_matching_pod(
     client: &Client,
