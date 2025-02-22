@@ -105,16 +105,14 @@ async fn find_pod(client: Client, config: &Config, query: ParsedQuery) -> anyhow
     let namespace = namespace.as_str();
     let lp = ListParams::default();
 
-    // Helper closure to check workload names
-    let matches_query = |name: &str| name.starts_with(&query.name);
-
     match query.workload_type {
         WorkloadType::Deployment | WorkloadType::Any => {
             let deployments: Api<Deployment> = Api::namespaced(client.clone(), namespace);
             if let Ok(list) = deployments.list(&lp).await {
                 if let Some(deployment) = list.items
                     .iter()
-                    .find(|d| d.metadata.name.as_ref().map_or(false, matches_query)) {
+                    .find(|d| d.metadata.name.as_ref()
+                        .map_or(false, |name| name.starts_with(&query.name))) {
                     if let Some(name) = &deployment.metadata.name {
                         if let Some(pod_name) = find_matching_pod(&client, namespace, name).await? {
                             return Ok(Some(pod_name));
@@ -132,7 +130,8 @@ async fn find_pod(client: Client, config: &Config, query: ParsedQuery) -> anyhow
             if let Ok(list) = statefulsets.list(&lp).await {
                 if let Some(statefulset) = list.items
                     .iter()
-                    .find(|ss| ss.metadata.name.as_ref().map_or(false, matches_query)) {
+                    .find(|ss| ss.metadata.name.as_ref()
+                        .map_or(false, |name| name.starts_with(&query.name))) {
                     if let Some(name) = &statefulset.metadata.name {
                         if let Some(pod_name) = find_matching_pod(&client, namespace, name).await? {
                             return Ok(Some(pod_name));
@@ -150,7 +149,8 @@ async fn find_pod(client: Client, config: &Config, query: ParsedQuery) -> anyhow
             if let Ok(list) = daemonsets.list(&lp).await {
                 if let Some(daemonset) = list.items
                     .iter()
-                    .find(|ds| ds.metadata.name.as_ref().map_or(false, matches_query)) {
+                    .find(|ds| ds.metadata.name.as_ref()
+                        .map_or(false, |name| name.starts_with(&query.name))) {
                     if let Some(name) = &daemonset.metadata.name {
                         if let Some(pod_name) = find_matching_pod(&client, namespace, name).await? {
                             return Ok(Some(pod_name));
