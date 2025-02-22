@@ -61,6 +61,40 @@ fn parse_query(query: &str) -> ParsedQuery {
     }
 }
 
+async fn find_matching_pod(
+    client: &Client,
+    namespace: &str,
+    workload_name: &str,
+) -> anyhow::Result<Option<String>> {
+    let pods: Api<Pod> = Api::namespaced(client.clone(), namespace);
+    let lp = ListParams::default();
+
+    if let Ok(pod_list) = pods.list(&lp).await {
+        // Find first running and ready pod that matches the workload name
+        for pod in pod_list.items {
+            if let Some(pod_name) = pod.metadata.name {
+                if pod_name.starts_with(workload_name) {
+                    // Check if pod is running and ready
+                    if let Some(status) = pod.status {
+                        let is_running = status.phase.as_deref() == Some("Running");
+                        let is_ready = status.conditions.iter()
+                            .flatten()
+                            .any(|condition| {
+                                condition.type_ == "Ready" && 
+                                condition.status == "True"
+                            });
+                        
+                        if is_running && is_ready {
+                            return Ok(Some(pod_name));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Ok(None)
+}
+
 async fn find_pod(client: Client, config: &Config, query: ParsedQuery) -> anyhow::Result<Option<String>> {
     let namespace = if let Some(ns) = &config.namespace {
         ns.clone()
@@ -71,134 +105,55 @@ async fn find_pod(client: Client, config: &Config, query: ParsedQuery) -> anyhow
     let namespace = namespace.as_str();
     let lp = ListParams::default();
 
-    // Only look at specific workload type if specified
-    if query.workload_type != WorkloadType::Any {
-        match query.workload_type {
-            WorkloadType::Deployment => {
-                let deployments: Api<Deployment> = Api::namespaced(client.clone(), namespace);
-                if let Ok(list) = deployments.list(&lp).await {
-                    for d in list.items {
-                        if let Some(name) = d.metadata.name {
-                            if name.starts_with(&query.name) {
-                                // Get pods for this deployment
-                                let pods: Api<Pod> = Api::namespaced(client.clone(), namespace);
-                                if let Ok(pod_list) = pods.list(&lp).await {
-                                    for pod in pod_list.items {
-                                        if let Some(pod_name) = pod.metadata.name {
-                                            if pod_name.starts_with(&name) {
-                                                return Ok(Some(pod_name));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            WorkloadType::StatefulSet => {
-                let statefulsets: Api<StatefulSet> = Api::namespaced(client.clone(), namespace);
-                if let Ok(list) = statefulsets.list(&lp).await {
-                    for ss in list.items {
-                        if let Some(name) = ss.metadata.name {
-                            if name.starts_with(&query.name) {
-                                // Get pods for this statefulset
-                                let pods: Api<Pod> = Api::namespaced(client.clone(), namespace);
-                                if let Ok(pod_list) = pods.list(&lp).await {
-                                    for pod in pod_list.items {
-                                        if let Some(pod_name) = pod.metadata.name {
-                                            if pod_name.starts_with(&name) {
-                                                return Ok(Some(pod_name));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            WorkloadType::DaemonSet => {
-                let daemonsets: Api<DaemonSet> = Api::namespaced(client.clone(), namespace);
-                if let Ok(list) = daemonsets.list(&lp).await {
-                    for ds in list.items {
-                        if let Some(name) = ds.metadata.name {
-                            if name.starts_with(&query.name) {
-                                // Get pods for this daemonset
-                                let pods: Api<Pod> = Api::namespaced(client.clone(), namespace);
-                                if let Ok(pod_list) = pods.list(&lp).await {
-                                    for pod in pod_list.items {
-                                        if let Some(pod_name) = pod.metadata.name {
-                                            if pod_name.starts_with(&name) {
-                                                return Ok(Some(pod_name));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            WorkloadType::Any => unreachable!(),
-        }
-        return Ok(None);
-    }
+    // Helper closure to check workload names
+    let matches_query = |name: &str| name.starts_with(&query.name);
 
-    // Look through workload types in preferred order
-    let deployments: Api<Deployment> = Api::namespaced(client.clone(), namespace);
-    if let Ok(list) = deployments.list(&lp).await {
-        for d in list.items {
-            if let Some(name) = d.metadata.name {
-                if name.starts_with(&query.name) {
-                    let pods: Api<Pod> = Api::namespaced(client.clone(), namespace);
-                    if let Ok(pod_list) = pods.list(&lp).await {
-                        for pod in pod_list.items {
-                            if let Some(pod_name) = pod.metadata.name {
-                                if pod_name.starts_with(&name) {
-                                    return Ok(Some(pod_name));
-                                }
-                            }
+    match query.workload_type {
+        WorkloadType::Deployment | WorkloadType::Any => {
+            let deployments: Api<Deployment> = Api::namespaced(client.clone(), namespace);
+            if let Ok(list) = deployments.list(&lp).await {
+                if let Some(deployment) = list.items
+                    .iter()
+                    .find(|d| d.metadata.name.as_ref().map_or(false, matches_query)) {
+                    if let Some(name) = &deployment.metadata.name {
+                        if let Some(pod_name) = find_matching_pod(&client, namespace, name).await? {
+                            return Ok(Some(pod_name));
                         }
                     }
                 }
             }
+            if query.workload_type != WorkloadType::Any {
+                return Ok(None);
+            }
         }
-    }
 
-    let statefulsets: Api<StatefulSet> = Api::namespaced(client.clone(), namespace);
-    if let Ok(list) = statefulsets.list(&lp).await {
-        for ss in list.items {
-            if let Some(name) = ss.metadata.name {
-                if name.starts_with(&query.name) {
-                    let pods: Api<Pod> = Api::namespaced(client.clone(), namespace);
-                    if let Ok(pod_list) = pods.list(&lp).await {
-                        for pod in pod_list.items {
-                            if let Some(pod_name) = pod.metadata.name {
-                                if pod_name.starts_with(&name) {
-                                    return Ok(Some(pod_name));
-                                }
-                            }
+        WorkloadType::StatefulSet | WorkloadType::Any => {
+            let statefulsets: Api<StatefulSet> = Api::namespaced(client.clone(), namespace);
+            if let Ok(list) = statefulsets.list(&lp).await {
+                if let Some(statefulset) = list.items
+                    .iter()
+                    .find(|ss| ss.metadata.name.as_ref().map_or(false, matches_query)) {
+                    if let Some(name) = &statefulset.metadata.name {
+                        if let Some(pod_name) = find_matching_pod(&client, namespace, name).await? {
+                            return Ok(Some(pod_name));
                         }
                     }
                 }
             }
+            if query.workload_type != WorkloadType::Any {
+                return Ok(None);
+            }
         }
-    }
 
-    let daemonsets: Api<DaemonSet> = Api::namespaced(client.clone(), namespace);
-    if let Ok(list) = daemonsets.list(&lp).await {
-        for ds in list.items {
-            if let Some(name) = ds.metadata.name {
-                if name.starts_with(&query.name) {
-                    let pods: Api<Pod> = Api::namespaced(client.clone(), namespace);
-                    if let Ok(pod_list) = pods.list(&lp).await {
-                        for pod in pod_list.items {
-                            if let Some(pod_name) = pod.metadata.name {
-                                if pod_name.starts_with(&name) {
-                                    return Ok(Some(pod_name));
-                                }
-                            }
+        WorkloadType::DaemonSet | WorkloadType::Any => {
+            let daemonsets: Api<DaemonSet> = Api::namespaced(client.clone(), namespace);
+            if let Ok(list) = daemonsets.list(&lp).await {
+                if let Some(daemonset) = list.items
+                    .iter()
+                    .find(|ds| ds.metadata.name.as_ref().map_or(false, matches_query)) {
+                    if let Some(name) = &daemonset.metadata.name {
+                        if let Some(pod_name) = find_matching_pod(&client, namespace, name).await? {
+                            return Ok(Some(pod_name));
                         }
                     }
                 }
