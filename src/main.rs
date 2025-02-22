@@ -3,6 +3,7 @@ extern crate kube;
 extern crate k8s_openapi; 
 
 use clap::Parser;
+use colorful::Colorful;
 use k8s_openapi::api::apps::v1::{Deployment, StatefulSet, DaemonSet};
 use k8s_openapi::api::core::v1::Pod;
 use kube::{Api, Client, api::ListParams};
