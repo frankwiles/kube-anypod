@@ -32,7 +32,6 @@ ingress-nginx-controller-69fbfb4bfd-dvn8d
 **NOTE:** All queries are prefix queries.  So if you run `anypod f` it will use the first workload it finds that 
 starts with the letter 'f'
 
-
 ```shell
 # Return the name of the nginx Deployment in the current namespace 
 $ anypod ingress
