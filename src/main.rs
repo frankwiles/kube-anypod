@@ -2,8 +2,7 @@ extern crate clap;
 extern crate kube; 
 extern crate k8s_openapi; 
 
-use clap::{Parser, CommandFactory};
-use clap_complete::{generate, Shell};
+use clap::Parser;
 use colorful::Colorful;
 use k8s_openapi::api::apps::v1::{Deployment, StatefulSet, DaemonSet};
 use k8s_openapi::api::core::v1::Pod;
@@ -33,12 +32,8 @@ struct Config {
     #[clap(short='e', long, default_value_t = false)]
     exec: bool,
 
-    /// Generate shell completions
-    #[clap(long = "completion", value_enum)]
-    completion: Option<Shell>,
-
     #[clap(value_name = "QUERY")]
-    query: Option<String>,
+    query: String,
 }
 
 fn parse_query(query: &str) -> ParsedQuery {
@@ -260,21 +255,8 @@ async fn find_pod(client: Client, config: &Config, query: ParsedQuery) -> anyhow
 async fn main() -> anyhow::Result<()> {
     let config = Config::parse();
 
-    // Handle completion generation if requested
-    if let Some(shell) = config.completion {
-        let mut cmd = Config::command();
-        let name = cmd.get_name().to_string();
-        generate(shell, &mut cmd, name, &mut std::io::stdout());
-        return Ok(());
-    }
-
-    // Ensure we have a query when not generating completions
-    let query = config.query.clone().ok_or_else(|| {
-        anyhow::anyhow!("A query is required when not generating completions")
-    })?;
     let client = Client::try_default().await?;
-    
-    let parsed = parse_query(&query);
+    let parsed = parse_query(&config.query);
     let namespace = if let Some(ns) = &config.namespace {
         ns.clone()
     } else {
