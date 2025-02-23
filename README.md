@@ -57,6 +57,21 @@ In the event `anypod` does not find any matching workloads it will tell you
 the namespace it is currently searching in and will list all of the various workloads it 
 DID find so you can re-run your query. 
 
+### Exec into the pod it finds
+
+Often I want to poke around in the running pod to inspect something about the environment or to run 
+a specific command.  `anypod` can help with ths.  Instead of returning the name to stdout, it will exec 
+you into the pod instead. 
+```shell
+$ anypod -e ingress
+
+or 
+
+$ anypod --exec ingress
+```
+
+Would run `kubectl exec -it ingress-nginx-controller-69fbfb4bfd-dvn8d -- /bin/bash` assuming that 
+was the pod name it found. 
 
 ## Install 
 
