@@ -58,12 +58,17 @@ jobs:
         run: cargo build --release --target ${{ matrix.platform.target }}
 
       - name: Generate SHA256 checksums
+        shell: bash
+        if: matrix.platform.os != 'windows-latest'
         run: |
-          if [ "${{ matrix.platform.os }}" = "windows-latest" ]; then
-            certutil -hashfile target/x86_64-pc-windows-msvc/release/anypod.exe SHA256 > anypod-windows-x86_64.exe.sha256
-          else
-            shasum -a 256 target/${{ matrix.platform.target }}/release/anypod > ${{ matrix.platform.asset_name }}.sha256
-          fi
+          shasum -a 256 target/${{ matrix.platform.target }}/release/anypod > ${{ matrix.platform.asset_name }}.sha256
+
+      - name: Generate SHA256 checksums (Windows)
+        if: matrix.platform.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $hash = Get-FileHash target/x86_64-pc-windows-msvc/release/anypod.exe -Algorithm SHA256
+          $hash.Hash > anypod-windows-x86_64.exe.sha256
 
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
