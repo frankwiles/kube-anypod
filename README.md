@@ -73,3 +73,5 @@ If you have a local rust toolchain set up you can build and install this manuall
 $ git clone ... ~/src/kube-anypod/
 $ cargo install --path ~/src/kubeanypod/
 ```
+
+You can find out more information about [the crate here](https://crates.io/crates/kube-anypod). 
