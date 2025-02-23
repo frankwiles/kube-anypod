@@ -102,19 +102,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6b964d184e89d9b6b67dd2715bc8e74cf3107fb2b529990c90cf517326150bf4"
 
 [[package]]
-name = "anypod"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "colorful",
- "k8s-openapi",
- "kube",
- "kube-runtime",
- "tokio",
-]
-
-[[package]]
 name = "async-broadcast"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -852,6 +839,19 @@ dependencies = [
  "k8s-openapi",
  "kube-client",
  "kube-core",
+]
+
+[[package]]
+name = "kube-anypod"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "colorful",
+ "k8s-openapi",
+ "kube",
+ "kube-runtime",
+ "tokio",
 ]
 
 [[package]]

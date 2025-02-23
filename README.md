@@ -57,3 +57,19 @@ In the event `anypod` does not find any matching workloads it will tell you
 the namespace it is currently searching in and will list all of the various workloads it 
 DID find so you can re-run your query. 
 
+
+## Install 
+
+
+### Pre-built binaries 
+
+You can find pre-built binaries that you can download and drop into your `$PATH` [here with the releases](https://github.com/frankwiles/kube-anypod/releases).
+
+### Build via Cargo
+
+If you have a local rust toolchain set up you can build and install this manually with: 
+
+```
+$ git clone ... ~/src/kube-anypod/
+$ cargo install --path ~/src/kubeanypod/
+```

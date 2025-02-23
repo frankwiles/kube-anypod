@@ -1,6 +1,6 @@
 [package]
-name = "anypod"
-version = "0.1.0"
+name = "kube-anypod"
+version = "0.2.0"
 edition = "2024"
 authors = ["Frank Wiles <frank@revsys.com>"]
 description = "Command line utility to quickly get the name of a random pod from a Deployment, StatefulSet or DaemonSet"
