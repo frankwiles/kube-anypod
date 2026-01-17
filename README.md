@@ -75,6 +75,11 @@ was the pod name it found.
 
 ## Install 
 
+### Homebrew 
+
+```shell
+$ brew install frankwiles/tools/kube-anypod  
+``` 
 
 ### Pre-built binaries 
 

@@ -1,6 +1,6 @@
 [package]
 name = "kube-anypod"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 authors = ["Frank Wiles <frank@revsys.com>"]
 description = "Command line utility to quickly get the name of a random pod from a Deployment, StatefulSet or DaemonSet"
@@ -21,12 +21,12 @@ name = "anypod"
 path = "src/main.rs"
 
 [dependencies]
-anyhow = "1.0.96"
-async-trait = "0.1"
-clap = { version = "4.5.30", features = ["derive"] }
+anyhow = "1.0.100"
+async-trait = "0.1.89"
+clap = { version = "4.5.54", features = ["derive"] }
 colorful = "0.3.2"
-k8s-openapi = { version = "0.24.0", default-features = false, features = ["v1_29"] }
-kube = "0.98.0"
-kube-runtime = "0.98.0"
-tokio = { version = "1.43.0", features = ["full"] }
+k8s-openapi = { version = "0.27.0", default-features = false, features = ["v1_32"] }
+kube = "3.0.0"
+kube-runtime = "3.0.0"
+tokio = { version = "1.49.0", features = ["full"] }
 
